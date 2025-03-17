@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice to Text with Pause Detection</title>
+</head>
+<body>
+    <button id="startButton">Start Voice Input</button>
+    <button id="stopButton" disabled>Stop Voice Input</button>
+    <div id="output"></div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const outputDiv = document.getElementById('output');
+
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!window.SpeechRecognition) {
+            alert("Your browser does not support Speech Recognition. Try using Chrome.");
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            let finalTranscript = '';
+            let interimTranscript = '';
+            let lastActivityTime;
+            let pauseTimeout;
+
+            const detectPause = () => {
+                const elapsedSeconds = Math.round((Date.now() - lastActivityTime) / 1000);
+                finalTranscript += ` [${elapsedSeconds}sec pause] `;
+                updateOutput();
+            };
+
+            const updateOutput = () => {
+                outputDiv.innerHTML = `<strong>Final:</strong> ${finalTranscript} <br> <em>Interim:</em> ${interimTranscript}`;
+            };
+
+            recognition.onstart = () => {
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                startButton.textContent = 'Listening...';
+            };
+
+            recognition.onresult = (event) => {
+                interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                // Update activity tracking
+                lastActivityTime = Date.now();
+                clearTimeout(pauseTimeout);
+                pauseTimeout = setTimeout(detectPause, 4000);
+                updateOutput();
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech Recognition Error:", event.error);
+            };
+
+            recognition.onend = () => {
+                if (!stopButton.disabled) {
+                    recognition.start();
+                } else {
+                    startButton.disabled = false;
+                    startButton.textContent = 'Start Voice Input';
+                }
+            };
+
+            startButton.addEventListener('click', () => {
+                finalTranscript = '';
+                interimTranscript = '';
+                updateOutput();
+                recognition.start();
+            });
+
+            stopButton.addEventListener('click', () => {
+                recognition.stop();
+                clearTimeout(pauseTimeout);
+                stopButton.disabled = true;
+                startButton.disabled = false;
+                startButton.textContent = 'Start Voice Input';
+            });
+        }
+    </script>
+</body>
+</html>
