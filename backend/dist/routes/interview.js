@@ -4,14 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const interv_1 = require("../controllers/interv");
-const r = express_1.default.Router();
-r.post('/create', (req, res, next) => {
-    try {
-        (0, interv_1.createInterv)(req, res, next);
-    }
-    catch (error) {
-        next(error);
-    }
-});
-exports.default = r;
+const interview_1 = require("../controllers/interview");
+const router = express_1.default.Router();
+router.post("/create", interview_1.createInterview);
+exports.default = router;

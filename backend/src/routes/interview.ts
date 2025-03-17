@@ -1,13 +1,8 @@
-import express from 'express'
-import { createInterv } from '../controllers/interv'
-const r = express.Router()
+import express from "express";
+import { createInterview } from "../controllers/interview";
 
-r.post('/create' , (req, res, next)=> {
-  try {
-    createInterv(req, res, next)
-  } catch (error) {
-    next(error)
-  }
-})
+const router = express.Router();
 
-export default r
+router.post("/create", createInterview);
+
+export default router;

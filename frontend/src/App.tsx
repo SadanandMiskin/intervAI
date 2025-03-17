@@ -1,17 +1,20 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { Create } from './pages/Create'
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { useState } from "react";
+import { Create } from "./pages/Create";
+import { Interview } from "./pages/Interview";
+import { Socket } from "socket.io-client";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [globalSocket, setGlobalSocket] = useState<Socket | null>(null);
 
   return (
-    <>
-      <Create />
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Create setGlobalSocket={setGlobalSocket} />} />
+        <Route path="/interview" element={<Interview globalSocket={globalSocket} />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
