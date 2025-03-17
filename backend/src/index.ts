@@ -1,23 +1,26 @@
-import express, { Express, Request, Response, NextFunction } from "express";
+import express from "express";
 import http from "http";
 import cors from "cors";
 import { Server, Socket } from "socket.io";
-import { getInterviewQuestions } from "./controllers/interview"; // Assuming this generates LLM questions
+import Redis from "ioredis";
+import mongoose from "mongoose";
+import InterviewModel from "./models/InterviewModel";
+import { getInterviewQuestions } from "./controllers/interview";
 
-const app: Express = express();
+const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
-  },
+  cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] },
 });
+const redis = new Redis();
+
+mongoose.connect("mongodb://localhost:27017/interviews");
 
 interface UserSession {
   socket: Socket;
   questions: any[];
   currentIndex: number;
+  userId: string;
 }
 
 const userSessions: Map<string, UserSession> = new Map();
@@ -25,20 +28,24 @@ const userSessions: Map<string, UserSession> = new Map();
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("sendjd", async (jd: string) => {
-    console.log("Received JD:", jd);
-
-    const questions = await getInterviewQuestions(jd); // Get questions from LLM
+  socket.on("sendjd", async (jd: string, userId: string) => {
+    const questions = await getInterviewQuestions(jd);
     if (!questions || questions.length === 0) return;
 
-    userSessions.set(socket.id, {
-      socket,
-      questions,
-      currentIndex: 0,
-    });
+    userSessions.set(socket.id, { socket, questions, currentIndex: 0, userId });
+    await redis.set(`interview:${userId}:answers`, JSON.stringify([]));
 
-    // Send the first question
     socket.emit("receiveQuestion", questions[0]);
+  });
+
+  socket.on("saveAnswer", async ({ question, answer }) => {
+    const session = userSessions.get(socket.id);
+    if (!session) return;
+
+    const key = `interview:${session.userId}:answers`;
+    const storedAnswers = JSON.parse((await redis.get(key)) || "[]");
+    storedAnswers.push({ question, answer });
+    await redis.set(key, JSON.stringify(storedAnswers));
   });
 
   socket.on("nextQuestion", () => {
@@ -47,14 +54,27 @@ io.on("connection", (socket) => {
 
     session.currentIndex++;
     if (session.currentIndex < session.questions.length) {
-      session.socket.emit("receiveQuestion", session.questions[session.currentIndex]);
+      socket.emit("receiveQuestion", session.questions[session.currentIndex]);
     } else {
-      session.socket.emit("receiveQuestion", { question: "No more questions available." });
+      socket.emit("interviewComplete");
+    }
+  });
+
+  socket.on("submitInterview", async () => {
+    const session = userSessions.get(socket.id);
+    if (!session) return;
+
+    const key = `interview:${session.userId}:answers`;
+    const answers = JSON.parse((await redis.get(key)) || "[]");
+
+    if (answers.length > 0) {
+      await InterviewModel.create({ userId: session.userId, answers });
+      await redis.del(key);
+      socket.emit("submissionSuccess", "Interview saved!");
     }
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
     userSessions.delete(socket.id);
   });
 });
@@ -62,7 +82,4 @@ io.on("connection", (socket) => {
 const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
-
-server.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
-});
+server.listen(port, () => console.log(`Server running at http://localhost:${port}`));

@@ -12,36 +12,22 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [started, setStarted] = useState(false);
-  const [greeting, setGreeting] = useState("");
-  const [timer, setTimer] = useState(180); // 3-minute timer
+  const [timer, setTimer] = useState(180);
   const [isRecording, setIsRecording] = useState(false);
-  const [answer, setAnswer] = useState("");
-  const [answers, setAnswers] = useState<{ question: string; answer: string }[]>([]);
-
-  const greetings = [
-    "Hello! Welcome to your mock interview.",
-    "Hey there! Ready to sharpen your skills?",
-    "Hi! Let's get started with your interview practice.",
-    "Welcome! Let's see how well you perform today.",
-    "Good day! Are you ready for some challenging questions?",
-  ];
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   useEffect(() => {
     if (!globalSocket) {
-      navigate("/"); // Redirect to home if socket is missing
+      navigate("/");
       return;
     }
 
-    // Pick a random greeting and start TTS
-    const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
-    setGreeting(randomGreeting);
-    speakText(randomGreeting);
-
     globalSocket.on("receiveQuestion", (question: Question) => {
-      speakText(question.question); // Speak the question before showing it
+      speakText(question.question);
       setCurrentQuestion(question);
-      setTimer(180); // Reset timer
-      setAnswer(""); // Reset answer
+      setTimer(180);
+      setTranscript(null);
     });
 
     return () => {
@@ -58,57 +44,68 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
 
   const speakText = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
   };
 
   const startRecording = () => {
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    const recognitionInstance = new (window as any).webkitSpeechRecognition();
+    recognitionInstance.lang = "en-US";
+    recognitionInstance.continuous = true; // Keeps recording until user stops
+    recognitionInstance.interimResults = false; // Only capture final speech
 
-    recognition.onstart = () => setIsRecording(true);
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript;
-      setAnswer(transcript);
+    recognitionInstance.onstart = () => {
+      setIsRecording(true);
+      setTranscript(""); // Reset transcript
     };
-    recognition.onerror = (event) => console.error("Speech Recognition Error:", event);
-    recognition.onend = () => setIsRecording(false);
 
-    recognition.start();
+    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+      const result = event.results[0][0].transcript;
+      setTranscript(result);
+    };
+
+    recognitionInstance.onerror = (event) => console.error("Speech Recognition Error:", event);
+
+    recognitionInstance.onend = () => {
+      setIsRecording(false);
+    };
+
+    setRecognition(recognitionInstance);
+    recognitionInstance.start();
   };
 
-  const handleStartInterview = () => {
-    setStarted(true);
-    if (globalSocket) {
-      globalSocket.emit("nextQuestion");
+  const stopRecording = () => {
+    if (recognition) {
+      recognition.stop();
+      setIsRecording(false);
+      setRecognition(null);
     }
   };
 
-  const handleNextQuestion = () => {
-    if (currentQuestion) {
-      setAnswers((prev) => [...prev, { question: currentQuestion.question, answer }]);
-    }
+  const handleSaveAndNext = () => {
+    if (!currentQuestion || transcript === null) return;
 
-    if (globalSocket) {
-      globalSocket.emit("nextQuestion");
-    }
+    globalSocket?.emit("saveAnswer", { question: currentQuestion.question, answer: transcript });
+
+    setCurrentQuestion(null);
+    setTranscript(null);
+    setIsRecording(false);
+    setRecognition(null);
+
+    globalSocket?.emit("nextQuestion");
   };
 
   const handleSkipQuestion = () => {
-    if (currentQuestion) {
-      setAnswers((prev) => [...prev, { question: currentQuestion.question, answer: "" }]);
-    }
+    if (!currentQuestion) return;
 
-    if (globalSocket) {
-      globalSocket.emit("nextQuestion");
-    }
+    globalSocket?.emit("saveAnswer", { question: currentQuestion.question, answer: "" });
+
+    setCurrentQuestion(null);
+    setTranscript(null);
+    setIsRecording(false);
+    setRecognition(null);
+
+    globalSocket?.emit("nextQuestion");
   };
 
   return (
@@ -117,8 +114,7 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
 
       {!started ? (
         <div>
-          <h3>{greeting}</h3>
-          <button onClick={handleStartInterview}>I'm good and Start</button>
+          <button onClick={() => setStarted(true)}>Start Interview</button>
         </div>
       ) : (
         <div>
@@ -128,16 +124,23 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
               <p>Time left: {timer}s</p>
 
               <button onClick={startRecording} disabled={isRecording}>
-                {isRecording ? "Recording..." : "Start Answering"}
+                {isRecording ? "Recording..." : "Start Recording"}
               </button>
 
-              <p><strong>Your Answer:</strong> {answer || "No answer yet"}</p>
+              {isRecording && (
+                <button onClick={stopRecording}>Stop Recording</button>
+              )}
 
-              <button onClick={handleNextQuestion}>Next Question</button>
-              <button onClick={handleSkipQuestion}>Skip Question</button>
+              {transcript && (
+                <div>
+                  <p><strong>Your Answer:</strong> {transcript}</p>
+                  <button onClick={handleSaveAndNext}>Save & Next</button>
+                  <button onClick={handleSkipQuestion}>Skip Question</button>
+                </div>
+              )}
             </>
           ) : (
-            <p>Loading questions...</p>
+            <p>Loading next question...</p>
           )}
         </div>
       )}
