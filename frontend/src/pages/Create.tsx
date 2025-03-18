@@ -8,7 +8,9 @@ export const Create = ({ setGlobalSocket }: { setGlobalSocket: (socket: Socket) 
 
   const handleSendJD = () => {
     if (jd.trim() !== "") {
-      const socket: Socket = io("http://localhost:3000"); // Establish WebSocket connection
+      const socket: Socket = io("http://localhost:3000", {
+        auth: { token: localStorage.getItem("token") },
+      });
       socket.emit("sendjd", jd);
       setJD("");
 

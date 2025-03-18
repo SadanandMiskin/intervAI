@@ -16,6 +16,7 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState<string | null>(null);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [interviewComplete, setInterviewComplete] = useState(false);
 
   useEffect(() => {
     if (!globalSocket) {
@@ -30,8 +31,18 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
       setTranscript(null);
     });
 
+    globalSocket.on("interviewComplete", () => {
+      setInterviewComplete(true);
+    });
+
+    globalSocket.on("interviewFeedback", (feedback) => {
+      navigate("/results", { state: { feedback } }); // Navigate to results page with feedback data
+    });
+
     return () => {
       globalSocket.off("receiveQuestion");
+      globalSocket.off("interviewComplete");
+      globalSocket.off("interviewFeedback");
     };
   }, [globalSocket, navigate]);
 
@@ -82,7 +93,7 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     }
   };
 
-  const handleSaveAndNext = () => {
+  const handleSaveAndNext = async () => {
     if (!currentQuestion || transcript === null) return;
 
     globalSocket?.emit("saveAnswer", { question: currentQuestion.question, answer: transcript });
@@ -106,6 +117,10 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     setRecognition(null);
 
     globalSocket?.emit("nextQuestion");
+  };
+
+  const handleSubmitInterview = () => {
+    globalSocket?.emit("submitInterview");
   };
 
   return (
@@ -141,6 +156,10 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
             </>
           ) : (
             <p>Loading next question...</p>
+          )}
+
+          {interviewComplete && (
+            <button onClick={handleSubmitInterview}>Submit Interview</button>
           )}
         </div>
       )}

@@ -2,8 +2,14 @@ import mongoose from "mongoose";
 
 const InterviewSchema = new mongoose.Schema({
   userId: String,
-  jd: String,
-  answers: [{ question: String, answer: String }],
+  answers: [
+    {
+      question: String,
+      userAnswer: String,
+      rating: Number,
+      improvedAnswer: String,
+    },
+  ],
 });
 
 export default mongoose.model("Interview", InterviewSchema);

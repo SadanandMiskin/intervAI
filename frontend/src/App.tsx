@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Create } from "./pages/Create";
 import { Interview } from "./pages/Interview";
 import { Socket } from "socket.io-client";
+import { Results } from "./pages/Results";
 
 function App() {
   const [globalSocket, setGlobalSocket] = useState<Socket | null>(null);
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Create setGlobalSocket={setGlobalSocket} />} />
         <Route path="/interview" element={<Interview globalSocket={globalSocket} />} />
+        <Route path="/results" element={<Results />} />
       </Routes>
     </Router>
   );

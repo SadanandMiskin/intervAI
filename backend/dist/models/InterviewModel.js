@@ -6,7 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const InterviewSchema = new mongoose_1.default.Schema({
     userId: String,
-    jd: String,
-    answers: [{ question: String, answer: String }],
+    answers: [
+        {
+            question: String,
+            userAnswer: String,
+            rating: Number,
+            improvedAnswer: String,
+        },
+    ],
 });
 exports.default = mongoose_1.default.model("Interview", InterviewSchema);

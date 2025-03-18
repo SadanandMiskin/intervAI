@@ -20,6 +20,7 @@ const ioredis_1 = __importDefault(require("ioredis"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const InterviewModel_1 = __importDefault(require("./models/InterviewModel"));
 const interview_1 = require("./controllers/interview");
+const evaluation_1 = require("./controllers/evaluation");
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
@@ -30,21 +31,24 @@ mongoose_1.default.connect("mongodb://localhost:27017/interviews");
 const userSessions = new Map();
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
-    socket.on("sendjd", (jd, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    socket.on("sendjd", (jd) => __awaiter(void 0, void 0, void 0, function* () {
         const questions = yield (0, interview_1.getInterviewQuestions)(jd);
         if (!questions || questions.length === 0)
             return;
-        userSessions.set(socket.id, { socket, questions, currentIndex: 0, userId });
-        yield redis.set(`interview:${userId}:answers`, JSON.stringify([]));
+        userSessions.set(socket.id, { socket, questions, currentIndex: 0, userId: socket.id });
+        yield redis.set(`interview:${socket.id}:answers`, JSON.stringify([]));
         socket.emit("receiveQuestion", questions[0]);
     }));
     socket.on("saveAnswer", (_a) => __awaiter(void 0, [_a], void 0, function* ({ question, answer }) {
         const session = userSessions.get(socket.id);
         if (!session)
             return;
-        const key = `interview:${session.userId}:answers`;
+        const key = `interview:${socket.id}:answers`;
+        // Send answer to LLM for evaluation
+        const { rating, improvedAnswer } = yield (0, evaluation_1.evaluateAnswer)(question, answer);
+        // Store answer, improved answer, and rating
         const storedAnswers = JSON.parse((yield redis.get(key)) || "[]");
-        storedAnswers.push({ question, answer });
+        storedAnswers.push({ question, originalAnswer: answer, improvedAnswer, rating });
         yield redis.set(key, JSON.stringify(storedAnswers));
     }));
     socket.on("nextQuestion", () => {
@@ -56,19 +60,21 @@ io.on("connection", (socket) => {
             socket.emit("receiveQuestion", session.questions[session.currentIndex]);
         }
         else {
-            socket.emit("interviewComplete");
+            socket.emit("interviewComplete"); // Notify the client that the interview is complete
         }
     });
     socket.on("submitInterview", () => __awaiter(void 0, void 0, void 0, function* () {
         const session = userSessions.get(socket.id);
         if (!session)
             return;
-        const key = `interview:${session.userId}:answers`;
+        const key = `interview:${socket.id}:answers`;
         const answers = JSON.parse((yield redis.get(key)) || "[]");
         if (answers.length > 0) {
-            yield InterviewModel_1.default.create({ userId: session.userId, answers });
+            yield InterviewModel_1.default.create({ userId: socket.id, answers });
             yield redis.del(key);
             socket.emit("submissionSuccess", "Interview saved!");
+            // Emit the feedback to the client
+            socket.emit("interviewFeedback", answers);
         }
     }));
     socket.on("disconnect", () => {
