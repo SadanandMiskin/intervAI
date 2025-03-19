@@ -20,7 +20,7 @@ export async function evaluateAnswer(question: string, answer: string) {
       "system",
       `You are an expert AI interviewer. Evaluate the answer for correctness, depth, and clarity.
        Give a rating from 1 to 10 and suggest improvements if necessary.
-       Return JSON format: { rating: number, improvedAnswer: string } only, noo need of extra writing`,
+       Return JSON format: { rating: number, improvedAnswer: string } only, noo need of extra writing. improvedAnswer should not too long.`,
     ],
     ["human", `Question: ${question}\nAnswer: ${answer}`],
   ]);

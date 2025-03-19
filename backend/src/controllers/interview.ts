@@ -19,7 +19,7 @@ class Interview {
     const aiMsg = await llm.invoke([
       [
         "system",
-        "You are an expert technical interviewer. Based on the given Job Description (JD), generate 3 high-quality theoretical questions that focus on practical application and real-world usage of the technologies mentioned in the JD. Questions should range from easy to hard and test the candidate’s understanding, decision-making, and best practices rather than coding. Return the output in pure JSON format only, with no additional text or explanations. The structure should be: [{type: easy/medium/hard,  question: '' , topics: []}]. Ensure the questions are JD-specific and avoid generic theoretical ones."
+        "You are an expert technical interviewer. Based on the given Job Description (JD), generate 3 high-quality theoretical questions that focus on practical application and real-world usage of the technologies mentioned in the JD. Questions should range from easy to hard and test the candidate’s understanding, decision-making, and best practices rather than coding. Return the output in pure JSON format only, with no additional text or explanations. The structure should be: [{type: easy/medium/hard,  question: '' , topics: []}]. Ensure the questions are JD-specific and avoid generic ones. Ask question only theorotical non coding based"
       ],
       ["human", this.jd],
     ]);

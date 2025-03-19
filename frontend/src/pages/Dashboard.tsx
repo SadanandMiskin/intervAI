@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../services/api';
 
-// Define types for session data
+// Define types
 interface Answer {
   question: string;
   userAnswer: string;
@@ -34,7 +34,7 @@ export const Dashboard = () => {
   const [data, setData] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -46,9 +46,7 @@ export const Dashboard = () => {
           },
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const result: SessionData = await response.json();
         setData(result);
@@ -62,133 +60,172 @@ export const Dashboard = () => {
     fetchUserData();
   }, [token]);
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // Calculate session stats if data is available
+  const sessionCount = data?.sessions?.length || 0;
+  const latestSession = data?.sessions?.[0]?.createdAt
+    ? new Date(data.sessions[0].createdAt).toLocaleDateString()
+    : 'N/A';
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <h1>Dashboard</h1>
-        <div className="dashboard-actions">
-          <Link to={'/create'}>
-            <button className="btn">Create Interview</button>
-          </Link>
-          <button className="btn logout" onClick={handleLogout}>Logout</button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Interview Dashboard</h1>
+              {data?.email && (
+                <p className="text-sm text-gray-500 mt-1">{data.email}</p>
+              )}
+            </div>
+            <div className="flex space-x-3">
+              <Link to="/create" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Interview
+              </Link>
+              <button
+                onClick={logout}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
-      {data?.sessions?.length ? (
-        <div className="session-grid">
-          {data.sessions.map((session) => (
-  <div
-    key={session._id || Math.random().toString(36).substr(2, 9)} // Fallback key if _id is missing
-    className={`session-tile ${selectedSession === session._id ? 'active' : ''}`}
-    onClick={() => setSelectedSession(selectedSession === session._id ? null : session._id)}
-  >
-    <h3>Session {session._id ? session._id.slice(-5) : 'Unknown'}</h3> 
-              <p><strong>Created:</strong> {new Date(session.createdAt).toLocaleString()}</p>
-              <p><strong>Updated:</strong> {new Date(session.updatedAt).toLocaleString()}</p>
+      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* Loading and Error States */}
+        {loading && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        )}
 
-              {selectedSession === session._id && (
-                <div className="session-details">
-                  <h4>Job Description:</h4>
-                  <p className="jd">{session.interviewId.jd}</p>
+        {error && (
+         <div className="p-6 text-center">
+         <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg>
+         <h3 className="mt-2 text-sm font-medium text-gray-900">No interview sessions</h3>
+         <p className="mt-1 text-sm text-gray-500">
+           Get started by creating a new interview session.
+         </p>
+         <div className="mt-6">
+           <Link to="/create" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+             <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+             </svg>
+             New Interview
+           </Link>
+         </div>
+       </div>
+        )}
 
-                  <h4>Interview Questions & Answers:</h4>
-                  {session.interviewId.answers.map((answer, index) => (
-                    <div key={index} className="answer-card">
-                      <p><strong>Question:</strong> {answer.question}</p>
-                      <p><strong>Your Answer:</strong> {answer.userAnswer}</p>
-                      <p><strong>Rating:</strong> {answer.rating}/10</p>
-                      <p><strong>Improved Answer:</strong> {answer.improvedAnswer}</p>
-                    </div>
-                  ))}
+        {/* Dashboard Content */}
+        {!loading && !error && (
+          <>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-sm font-medium text-gray-500">Total Sessions</h2>
+                <p className="mt-2 text-3xl font-bold text-gray-900">{sessionCount}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-sm font-medium text-gray-500">Latest Interview</h2>
+                <p className="mt-2 text-3xl font-bold text-gray-900">{latestSession}</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-sm font-medium text-gray-500">Account Status</h2>
+                <p className="mt-2 text-3xl font-bold text-green-600">Active</p>
+              </div>
+            </div>
+
+            {/* Sessions List */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="px-6 py-5 border-b border-gray-200">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Interview Sessions
+                </h3>
+              </div>
+
+              {!data?.sessions  || data.sessions.length === 0 ? (
+                <div className="p-6 text-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No interview sessions</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Get started by creating a new interview session.
+                  </p>
+                  <div className="mt-6">
+                    <Link to="/create" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                      <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      New Interview
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                  {data.sessions.map((session) => {
+                    // Calculate average rating if answers exist
+                    const answers = session.interviewId.answers || [];
+                    const avgRating = answers.length
+                      ? (answers.reduce((sum, ans) => sum + ans.rating, 0) / answers.length).toFixed(1)
+                      : 'N/A';
+
+                    // Format dates
+                    const createdDate = session.createdAt
+                      ? new Date(session.createdAt).toLocaleDateString()
+                      : 'N/A';
+
+                    return (
+                      <div
+                        key={session.interviewId._id}
+                        className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition cursor-pointer"
+                        onClick={() => navigate(`/session/${session.interviewId._id}`, { state: { session } })}
+                      >
+                        <div className="p-4">
+                          <div className="flex justify-between items-start">
+                            <h3 className="text-lg font-medium text-gray-900 truncate" title={session.interviewId.jd}>
+                              {session.interviewId.jd.length > 40
+                                ? `${session.interviewId.jd.substring(0, 40)}...`
+                                : session.interviewId.jd}
+                            </h3>
+                            <span className="bg-blue-100 text-blue-800 font-medium px-2.5 py-0.5 rounded-full text-xs">
+                              {answers.length} Q&A
+                            </span>
+                          </div>
+
+                          <div className="mt-4 flex justify-between items-center">
+                            <div className="flex items-center">
+                              <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                              <span className="ml-1 text-sm text-gray-700">{avgRating}</span>
+                            </div>
+                            <span className="text-xs text-gray-500">{createdDate}</span>
+                          </div>
+                        </div>
+                        <div className="bg-blue-50 px-4 py-2 border-t border-gray-200">
+                          <span className="text-sm text-blue-600 font-medium">View Details →</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          ))}
-        </div>
-      ) : (
-        <p>No interview sessions found.</p>
-      )}
-
-      {/* Styles */}
-      <style>
-        {`
-          .dashboard-container {
-            max-width: 800px;
-            margin: auto;
-            padding: 20px;
-          }
-          .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-          }
-          .dashboard-actions {
-            display: flex;
-            gap: 10px;
-          }
-          .btn {
-            padding: 8px 12px;
-            border: none;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            transition: 0.3s;
-          }
-          .btn:hover {
-            background-color: #0056b3;
-          }
-          .logout {
-            background-color: #ff4d4d;
-          }
-          .logout:hover {
-            background-color: #cc0000;
-          }
-          .session-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-          }
-          .session-tile {
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            background-color: #f8f9fa;
-            transition: 0.3s;
-          }
-          .session-tile:hover {
-            background-color: #e2e6ea;
-          }
-          .session-tile.active {
-            background-color: #d1ecf1;
-            border: 2px solid #0c5460;
-          }
-          .session-details {
-            margin-top: 10px;
-          }
-          .jd {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-          }
-          .answer-card {
-            background: #fff;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-        `}
-      </style>
+          </>
+        )}
+      </main>
     </div>
   );
 };

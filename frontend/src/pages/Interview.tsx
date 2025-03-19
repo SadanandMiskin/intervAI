@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Socket } from "socket.io-client";
 
@@ -17,6 +17,21 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
   const [transcript, setTranscript] = useState<string | null>(null);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
+  const [greeting] = useState("Welcome to your interview session! I'm your AI interviewer today. When you're ready, click 'Start Interview' and I'll guide you through a series of questions.");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [submitEnabled, setSubmitEnabled] = useState(false);
+  const GREETINGS = [
+    "Welcome to your interview session! I'm your AI interviewer today. When you're ready, we'll go through a series of questions to assess your skills.",
+    "Hello and welcome to your interview! I'll be guiding you through some questions today. Take your time and answer as best as you can.",
+    "Thank you for joining the interview session. I'll start by asking you a few questions. Let's begin when you're ready.",
+    "Good day! This is your AI interviewer. We'll proceed with the interview questions one by one. Feel free to start when you're prepared.",
+    "Welcome! Let's kick off the interview. I'll ask you some questions, and you can respond at your own pace. Ready to start?"
+  ];
+
+
+  // Refs for animation
+  const animationRef = useRef<number>(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!globalSocket) {
@@ -25,26 +40,37 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     }
 
     globalSocket.on("receiveQuestion", (question: Question) => {
-      speakText(question.question);
+      if (started) {
+        speakText(question.question);
+      }
       setCurrentQuestion(question);
       setTimer(180);
       setTranscript(null);
     });
 
     globalSocket.on("interviewComplete", () => {
+      if (started) {
+        speakText("The interview is now complete. Please wait for a while till I process the interview and check in dashboard for Analysis.");
+      }
       setInterviewComplete(true);
+
+      // Enable submit button after 4 seconds
+      setTimeout(() => {
+        setSubmitEnabled(true);
+      }, 5000);
     });
 
     globalSocket.on("interviewFeedback", (feedback) => {
-      navigate("/results", { state: { feedback } }); // Navigate to results page with feedback data
+      navigate("/results", { state: { feedback } });
     });
 
     return () => {
       globalSocket.off("receiveQuestion");
       globalSocket.off("interviewComplete");
       globalSocket.off("interviewFeedback");
+      speechSynthesis.cancel();
     };
-  }, [globalSocket, navigate]);
+  }, [globalSocket, navigate, started]);
 
   useEffect(() => {
     if (started && timer > 0) {
@@ -53,21 +79,155 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     }
   }, [started, timer]);
 
+  // Setup the Siri-like animation
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas dimensions
+    const setCanvasDimensions = () => {
+      const width = canvas.parentElement?.clientWidth || 300;
+      const height = canvas.parentElement?.clientHeight || 500;
+      canvas.width = width;
+      canvas.height = height;
+    };
+
+    setCanvasDimensions();
+    window.addEventListener('resize', setCanvasDimensions);
+
+    // Animation variables
+    let noiseOffset = 0;
+    let colorHue = 0;
+    const shadowPoints = Array.from({ length: 50 }, () => Math.random() * Math.PI * 2);
+
+    // Perlin-like noise generator
+    const noise = (x: number) => {
+      return Math.sin(x) * 0.5 + Math.sin(x * 2.2) * 0.3 + Math.sin(x * 4.7) * 0.2;
+    };
+
+    // Animation function
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const baseSize = Math.min(canvas.width, canvas.height) * 0.3;
+
+      // Create evolving shadow shape
+      const createShadowPath = (phase: number) => {
+        const points = shadowPoints.map((angle, i) => {
+          const noiseValue = noise(noiseOffset + i * 0.1 + phase);
+          const displacement = baseSize * 0.7 * noiseValue;
+          return {
+            x: centerX + Math.cos(angle) * (baseSize + displacement),
+            y: centerY + Math.sin(angle) * (baseSize + displacement)
+          };
+        });
+
+        return points;
+      };
+
+      // Draw rotating color shadows
+      const drawShadowLayer = (points: Array<{x: number, y: number}>, phaseOffset: number) => {
+        ctx.beginPath();
+        points.forEach((point, i) => {
+          const nextPoint = points[(i + 1) % points.length];
+          if (i === 0) ctx.moveTo(point.x, point.y);
+          ctx.lineTo(nextPoint.x, nextPoint.y);
+        });
+        ctx.closePath();
+
+        const gradient = ctx.createLinearGradient(
+          centerX + Math.cos(colorHue) * baseSize,
+          centerY + Math.sin(colorHue) * baseSize,
+          centerX + Math.cos(colorHue + Math.PI) * baseSize,
+          centerY + Math.sin(colorHue + Math.PI) * baseSize
+        );
+
+        gradient.addColorStop(0, `hsl(${(colorHue * 180/Math.PI + phaseOffset) % 360}, 100%, 80%)`);
+        gradient.addColorStop(0.5, `hsl(${(colorHue * 180/Math.PI + 120 + phaseOffset) % 360}, 90%, 70%)`);
+        gradient.addColorStop(1, `hsl(${(colorHue * 180/Math.PI + 240 + phaseOffset) % 360}, 89%, 100%)`);
+
+        ctx.fillStyle = gradient;
+        ctx.filter = `blur(${baseSize * 0.1}px) opacity(${isSpeaking ? 0.7 : 0.3})`;
+        ctx.fill();
+      };
+
+      // Generate front and back shadow layers
+      const frontPoints = createShadowPath(1);
+      // const backPoints = createShadowPath(Math.PI);
+
+      // // Draw back layer first
+      // drawShadowLayer(backPoints, 60);
+      // Draw front layer
+      drawShadowLayer(frontPoints, -30);
+
+      // Pulsing core
+      const pulse = Math.sin(Date.now() * 0.005) * (isSpeaking ? 7 : 5);
+      const coreGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, baseSize + pulse
+      );
+      coreGradient.addColorStop(0, `hsla(180, 10%, 100%, ${isSpeaking ? 0.3 : 0.2})`);
+      coreGradient.addColorStop(1, `hsla(210, 10%, 80%, ${isSpeaking ? 0.3 : 0.1})`);
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, baseSize + pulse, 0, Math.PI * 2);
+      ctx.fillStyle = coreGradient;
+      ctx.filter = 'none';
+      ctx.fill();
+
+      // Update animation variables
+      noiseOffset += isSpeaking ? 0.05 : 0.02;
+      colorHue += isSpeaking ? 0.03 : 0.01;
+      shadowPoints.forEach((_, i) => {
+        shadowPoints[i] += (isSpeaking ? 0.02 : 0.005) * (i % 2 ? 1 : -1);
+      });
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', setCanvasDimensions);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [isSpeaking]);
+
   const speakText = (text: string) => {
+    setIsSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
+  };
+
+  const handleStartInterview = () => {
+    setStarted(true);
+    // Only speak the greeting when the user starts the interview
+    speakText(greeting);
+
+    // Request the first question after greeting
+    globalSocket?.emit("nextQuestion");
   };
 
   const startRecording = () => {
     const recognitionInstance = new (window as any).webkitSpeechRecognition();
     recognitionInstance.lang = "en-US";
-    recognitionInstance.continuous = true; // Keeps recording until user stops
-    recognitionInstance.interimResults = false; // Only capture final speech
+    recognitionInstance.continuous = true;
+    recognitionInstance.interimResults = false;
 
     recognitionInstance.onstart = () => {
       setIsRecording(true);
-      setTranscript(""); // Reset transcript
+      setTranscript("");
     };
 
     recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
@@ -120,50 +280,150 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
   };
 
   const handleSubmitInterview = () => {
-    const user = localStorage.getItem('user')
+    const user = localStorage.getItem('user');
     globalSocket?.emit("submitInterview", {user: user});
   };
 
+  
+
   return (
-    <div>
-      <h2>Interview Session</h2>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-0 m-0 overflow-hidden flex">
+      {/* Left side - AI Visualization (30% width) */}
+      <div className="w-3/10 relative flex flex-col bg-gradient-to-b from-indigo-900 to-blue-900 items-center justify-center">
+        <div className="px-6 py-8 flex flex-col items-center justify-center h-full w-full">
+          {/* Canvas container */}
+          <div className="relative w-full aspect-square max-w-md mb-4">
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full rounded-full"
+            ></canvas>
 
-      {!started ? (
-        <div>
-          <button onClick={() => setStarted(true)}>Start Interview</button>
+            {/* Pulse effect around the canvas */}
+            <div className={`absolute inset-0 rounded-full ${isSpeaking ? 'animate-pulse' : ''} bg-indigo-500 bg-opacity-10 -z-10`}></div>
+          </div>
+
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-2 text-center">AI Interviewer</h2>
+          <p className="text-indigo-200 text-sm md:text-base text-center">
+            {isSpeaking ? "Speaking..." : "Listening..."}
+          </p>
+
+          {!started && (
+            <button
+              onClick={handleStartInterview}
+              className="mt-8 px-6 py-3 bg-indigo-500 text-white font-medium rounded-xl shadow-lg hover:bg-indigo-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 transform hover:scale-105"
+            >
+              Start Interview
+            </button>
+          )}
         </div>
-      ) : (
-        <div>
-          {currentQuestion ? (
-            <>
-              <h3>{currentQuestion.question}</h3>
-              <p>Time left: {timer}s</p>
+      </div>
 
-              <button onClick={startRecording} disabled={isRecording}>
-                {isRecording ? "Recording..." : "Start Recording"}
-              </button>
+      {/* Right side - Questions & Controls (70% width) */}
+      <div className="w-7/10 h-screen overflow-y-auto">
+        <div className="p-6 md:p-10 max-w-4xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-bold text-indigo-900 mb-8">Interview Session</h1>
 
-              {isRecording && (
-                <button onClick={stopRecording}>Stop Recording</button>
-              )}
+          {!started ? (
+            <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 transform transition-all duration-500">
+              <p className="text-gray-700 text-lg leading-relaxed mb-4">{greeting}</p>
+              <p className="text-gray-600 mb-6">Click the button on the left to begin your interview experience.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {currentQuestion ? (
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500">
+                  {/* Question header with timer */}
+                  <div className="bg-gradient-to-r from-indigo-700 to-blue-700 px-6 py-5">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-semibold text-white">Current Question</h3>
+                      <div className="bg-indigo-900 bg-opacity-30 px-4 py-2 rounded-lg">
+                        <p className="text-white">Time: <span className="font-mono font-bold">{timer}s</span></p>
+                      </div>
+                    </div>
+                  </div>
 
-              {transcript && (
-                <div>
-                  <p><strong>Your Answer:</strong> {transcript}</p>
-                  <button onClick={handleSaveAndNext}>Save & Next</button>
-                  <button onClick={handleSkipQuestion}>Skip Question</button>
+                  {/* Question content */}
+                  <div className="p-6">
+                    <div className="bg-indigo-50 p-5 rounded-xl mb-6">
+                      <p className="text-gray-800 text-lg">{currentQuestion.question}</p>
+                    </div>
+
+                    {/* Recording controls */}
+                    <div className="flex justify-center mb-6">
+                      <button
+                        onClick={isRecording ? stopRecording : startRecording}
+                        className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-white shadow-md transition-all duration-300 ${
+                          isRecording
+                            ? 'bg-red-600 hover:bg-red-700 animate-pulse'
+                            : 'bg-indigo-600 hover:bg-indigo-700'
+                        }`}
+                      >
+                        <span className={`h-3 w-3 rounded-full ${isRecording ? 'bg-red-300' : 'bg-indigo-300'}`}></span>
+                        {isRecording ? "Stop Recording" : "Start Recording"}
+                      </button>
+                    </div>
+
+                    {/* Answer transcript */}
+                    {transcript !== null && (
+                      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                        <h4 className="text-sm text-gray-500 uppercase tracking-wider mb-2">Your Answer:</h4>
+                        <p className="text-gray-800 mb-6">{transcript}</p>
+
+                        {!isRecording && (
+                          <div className="flex flex-wrap gap-3 justify-end">
+                            <button
+                              onClick={handleSkipQuestion}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                            >
+                              Skip Question
+                            </button>
+                            <button
+                              onClick={handleSaveAndNext}
+                              className="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                            >
+                              Save & Next
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center justify-center min-h-64">
+                  {interviewComplete ? (
+                    <div className="text-center w-full max-w-md">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">Interview Complete!</h3>
+                      <p className="text-gray-600 mb-6">All questions are complete, Please submit the interview and check dashboard for Analysis.</p>
+                      <button
+                        onClick={handleSubmitInterview}
+                        disabled={!submitEnabled}
+                        className={`w-full px-5 py-3 font-medium rounded-xl shadow-md transition-all ${
+                          submitEnabled
+                            ? 'bg-green-600 text-white hover:bg-green-700 transform hover:scale-105'
+                            : 'bg-green-300 text-white cursor-not-allowed'
+                        }`}
+                      >
+                        {submitEnabled ? "Submit Interview" : "Processing interview..."}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                      <p className="text-gray-600">Loading next question...</p>
+                    </>
+                  )}
                 </div>
               )}
-            </>
-          ) : (
-            <p>Loading next question...</p>
-          )}
-
-          {interviewComplete && (
-            <button onClick={handleSubmitInterview}>Submit Interview</button>
+            </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -9,6 +9,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Login } from "./pages/Login";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
+import { SessionDetails } from "./pages/SessionDetails";
+import  Homepage  from "./pages/Homepage";
 
 function App() {
   const [globalSocket, setGlobalSocket] = useState<Socket | null>(null);
@@ -19,6 +21,7 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+          <Route path="/" element={<Homepage />} />
           <Route path="/login" element={<Login />} />
 
 <Route path="/create" element={
@@ -42,6 +45,11 @@ function App() {
 <ProtectedRoute>
   <Dashboard />
 </ProtectedRoute>
+} />
+<Route path="/session/:id" element={
+  <ProtectedRoute>
+    <SessionDetails />
+  </ProtectedRoute>
 } />
           </Routes>
         </Router>

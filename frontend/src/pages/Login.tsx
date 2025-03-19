@@ -5,6 +5,7 @@ import axios from 'axios';
 import { API_URL } from '../services/api';
 // import Header from './Header';
 import { Loading } from './Loading';
+import { FaArrowDown } from 'react-icons/fa';
 
 interface GoogleAuthConfig {
   client_id: string;
@@ -55,7 +56,8 @@ export const Login: React.FC = () => {
         {
           theme: "outline",
           size: "large",
-          width: "100%"
+          width: "100%",
+
         }
       );
     }
@@ -99,19 +101,27 @@ export const Login: React.FC = () => {
 
   return (
     <>
+    <nav className="fixed w-full flex justify-between items-center px-6 py-4 bg-gray-100/80 backdrop-blur-sm z-10">
+        <div className="text-xl font-bold tracking-tight text-black">IntervAI</div>
+
+      </nav>
       {/* <Header /> */}
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-100 to-rose-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br  py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-w-5 w-full space-y-8">
           <div>
             <div className='flex max-w-full justify-center items-center gap-3'>
-              <img src='p.png' alt="Logo" className='w-10'/>
-              <h1 className='text-4xl font-bold'>Chat0sm</h1>
+              {/* <img src='p.png' alt="Logo" className='w-10'/> */}
+              {/* <h1 className='text-4xl font-bold'>Chat0sm</h1> */}
             </div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to your account
+            <h2 className="mt-6 text-center md:text-7xl font-extrabold text-gray-900">
+              Before you Start In !!!!
             </h2>
+
+           <div className='w-full flex justify-center'>
+           <h2 className='text-center w-full'><FaArrowDown /></h2>
+           </div>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                 {error}
@@ -169,16 +179,7 @@ export const Login: React.FC = () => {
                 </div>
               </div>
 
-              {isLoading ? (
-                <div className="w-full flex justify-center py-2">
-                  <Loading size="medium" color="indigo" message="Processing..." />
-                </div>
-              ) : (
-                <div className='flex justify-center'>
 
-                  <div id="googleSignIn"></div>
-                </div>
-              )}
 
               <Link
                 to="/register"
@@ -189,8 +190,19 @@ export const Login: React.FC = () => {
                 Don't have an account? Register
               </Link>
             </div>
-          </form>
+          </form> */}
+          {isLoading ? (
+                <div className="w-full flex justify-center py-2">
+                  <Loading size="medium" color="indigo" message="Processing..." />
+                </div>
+              ) : (
+                <div className='flex justify-center'>
+
+                  <div id="googleSignIn" ></div>
+                </div>
+              )}
         </div>
+
       </div>
     </>
   );
