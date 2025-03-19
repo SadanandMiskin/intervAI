@@ -6,6 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const InterviewSchema = new mongoose_1.default.Schema({
     userId: String,
+    username: String,
+    googleId: String,
+    email: String,
+    jd: String,
     answers: [
         {
             question: String,

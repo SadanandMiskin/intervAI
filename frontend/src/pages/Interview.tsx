@@ -120,7 +120,8 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
   };
 
   const handleSubmitInterview = () => {
-    globalSocket?.emit("submitInterview");
+    const user = localStorage.getItem('user')
+    globalSocket?.emit("submitInterview", {user: user});
   };
 
   return (

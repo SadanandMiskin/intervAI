@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const InterviewSchema = new mongoose.Schema({
   userId: String,
+  username: String,
+  googleId: String,
+  email: String,
+  jd: String,
   answers: [
     {
       question: String,
