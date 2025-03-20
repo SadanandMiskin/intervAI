@@ -1,5 +1,14 @@
-import React from "react";
+// import React from "react";
 import { useLocation } from "react-router-dom";
+
+type Answer ={
+  rating: number
+  improvedAnswer?: string,
+  userAnswer?: string
+  question?: string
+  originalAnswer?: string
+}
+
 
 export const Results = () => {
   const location = useLocation();
@@ -9,7 +18,7 @@ export const Results = () => {
     <div className="container mx-auto mt-10 text-white">
       <h2 className="text-3xl font-bold mb-6">Interview Feedback</h2>
       {feedback.length > 0 ? (
-        feedback.map((item, index) => (
+        feedback.map((item: Answer, index: number) => (
           <div key={index} className="p-4 mb-4 bg-gray-800 rounded-lg">
             <h3 className="text-lg font-semibold">{item.question}</h3>
             <p className="text-sm text-gray-400">Your Answer: {item.originalAnswer}</p>

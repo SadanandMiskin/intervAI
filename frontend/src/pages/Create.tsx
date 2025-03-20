@@ -9,7 +9,6 @@ export const Create = ({ setGlobalSocket }: { setGlobalSocket: (socket: Socket) 
   const MIN_CHARS = 10;
   const navigate = useNavigate();
 
-  // Handle loading progress animation
   useEffect(() => {
     let interval = 0
 
@@ -23,7 +22,7 @@ export const Create = ({ setGlobalSocket }: { setGlobalSocket: (socket: Socket) 
           }
           return newProgress;
         });
-      }, 40); // 4000ms / 100 = 40ms per 1% increment
+      }, 40);
     }
 
     return () => {
@@ -160,7 +159,6 @@ export const Create = ({ setGlobalSocket }: { setGlobalSocket: (socket: Socket) 
           </div>
         </div>
 
-        {/* Tips Section */}
         <div className="mt-8 bg-blue-50 rounded-lg p-6 border border-blue-100">
           <h3 className="text-lg font-medium text-blue-800 mb-3">Tips for Better Results</h3>
           <ul className="space-y-2 text-sm text-blue-700">

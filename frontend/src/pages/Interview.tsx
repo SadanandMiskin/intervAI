@@ -2,6 +2,50 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Socket } from "socket.io-client";
 
+// Add type definitions for the Web Speech API
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  [index: number]: SpeechRecognitionResult;
+  item(index: number): SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  readonly length: number;
+  [index: number]: SpeechRecognitionAlternative;
+  item(index: number): SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: Error) => void;
+  onend: () => void;
+  onstart: () => void;
+}
+
+// Declare the global SpeechRecognition constructor
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 interface Question {
   type: string;
   question: string;
@@ -20,16 +64,16 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
   const [greeting] = useState("Welcome to your interview session! I'm your AI interviewer today. When you're ready, click 'Start Interview' and I'll guide you through a series of questions.");
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [submitEnabled, setSubmitEnabled] = useState(false);
-  const GREETINGS = [
-    "Welcome to your interview session! I'm your AI interviewer today. When you're ready, we'll go through a series of questions to assess your skills.",
-    "Hello and welcome to your interview! I'll be guiding you through some questions today. Take your time and answer as best as you can.",
-    "Thank you for joining the interview session. I'll start by asking you a few questions. Let's begin when you're ready.",
-    "Good day! This is your AI interviewer. We'll proceed with the interview questions one by one. Feel free to start when you're prepared.",
-    "Welcome! Let's kick off the interview. I'll ask you some questions, and you can respond at your own pace. Ready to start?"
-  ];
+  const [textareaContent, setTextareaContent] = useState("");
+  const [inputMethod, setInputMethod] = useState<"text" | "recording" | null>(null);
+  // const GREETINGS = [
+  //   "Welcome to your interview session! I'm your AI interviewer today. When you're ready, we'll go through a series of questions to assess your skills.",
+  //   "Hello and welcome to your interview! I'll be guiding you through some questions today. Take your time and answer as best as you can.",
+  //   "Thank you for joining the interview session. I'll start by asking you a few questions. Let's begin when you're ready.",
+  //   "Good day! This is your AI interviewer. We'll proceed with the interview questions one by one. Feel free to start when you're prepared.",
+  //   "Welcome! Let's kick off the interview. I'll ask you some questions, and you can respond at your own pace. Ready to start?"
+  // ];
 
-
-  // Refs for animation
   const animationRef = useRef<number>(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -46,6 +90,8 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
       setCurrentQuestion(question);
       setTimer(180);
       setTranscript(null);
+      setTextareaContent("");
+      setInputMethod(null);
     });
 
     globalSocket.on("interviewComplete", () => {
@@ -54,10 +100,9 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
       }
       setInterviewComplete(true);
 
-      // Enable submit button after 4 seconds
       setTimeout(() => {
         setSubmitEnabled(true);
-      }, 5000);
+      }, 8000);
     });
 
     globalSocket.on("interviewFeedback", (feedback) => {
@@ -79,7 +124,6 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     }
   }, [started, timer]);
 
-  // Setup the Siri-like animation
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -87,7 +131,6 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas dimensions
     const setCanvasDimensions = () => {
       const width = canvas.parentElement?.clientWidth || 300;
       const height = canvas.parentElement?.clientHeight || 500;
@@ -98,17 +141,14 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     setCanvasDimensions();
     window.addEventListener('resize', setCanvasDimensions);
 
-    // Animation variables
     let noiseOffset = 0;
     let colorHue = 0;
     const shadowPoints = Array.from({ length: 50 }, () => Math.random() * Math.PI * 2);
 
-    // Perlin-like noise generator
     const noise = (x: number) => {
       return Math.sin(x) * 0.5 + Math.sin(x * 2.2) * 0.3 + Math.sin(x * 4.7) * 0.2;
     };
 
-    // Animation function
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -116,7 +156,6 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
       const centerY = canvas.height / 2;
       const baseSize = Math.min(canvas.width, canvas.height) * 0.3;
 
-      // Create evolving shadow shape
       const createShadowPath = (phase: number) => {
         const points = shadowPoints.map((angle, i) => {
           const noiseValue = noise(noiseOffset + i * 0.1 + phase);
@@ -130,7 +169,6 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
         return points;
       };
 
-      // Draw rotating color shadows
       const drawShadowLayer = (points: Array<{x: number, y: number}>, phaseOffset: number) => {
         ctx.beginPath();
         points.forEach((point, i) => {
@@ -156,16 +194,9 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
         ctx.fill();
       };
 
-      // Generate front and back shadow layers
       const frontPoints = createShadowPath(1);
-      // const backPoints = createShadowPath(Math.PI);
-
-      // // Draw back layer first
-      // drawShadowLayer(backPoints, 60);
-      // Draw front layer
       drawShadowLayer(frontPoints, -30);
 
-      // Pulsing core
       const pulse = Math.sin(Date.now() * 0.005) * (isSpeaking ? 7 : 5);
       const coreGradient = ctx.createRadialGradient(
         centerX, centerY, 0,
@@ -180,7 +211,6 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
       ctx.filter = 'none';
       ctx.fill();
 
-      // Update animation variables
       noiseOffset += isSpeaking ? 0.05 : 0.02;
       colorHue += isSpeaking ? 0.03 : 0.01;
       shadowPoints.forEach((_, i) => {
@@ -212,15 +242,16 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
 
   const handleStartInterview = () => {
     setStarted(true);
-    // Only speak the greeting when the user starts the interview
     speakText(greeting);
-
-    // Request the first question after greeting
     globalSocket?.emit("nextQuestion");
   };
 
   const startRecording = () => {
-    const recognitionInstance = new (window as any).webkitSpeechRecognition();
+    setInputMethod("recording");
+
+    // Use the correct SpeechRecognition constructor with proper type checking
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognitionInstance = new SpeechRecognition();
     recognitionInstance.lang = "en-US";
     recognitionInstance.continuous = true;
     recognitionInstance.interimResults = false;
@@ -253,6 +284,21 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     }
   };
 
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTextareaContent(e.target.value);
+    if (inputMethod !== "text" && e.target.value.length > 0) {
+      setInputMethod("text");
+    }
+
+    if (e.target.value.length > 0) {
+      setTranscript(e.target.value);
+    } else {
+      setTextareaContent('')
+      setTranscript(null)
+      setInputMethod(null)
+    }
+  };
+
   const handleSaveAndNext = async () => {
     if (!currentQuestion || transcript === null) return;
 
@@ -262,6 +308,8 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     setTranscript(null);
     setIsRecording(false);
     setRecognition(null);
+    setTextareaContent("");
+    setInputMethod(null);
 
     globalSocket?.emit("nextQuestion");
   };
@@ -275,6 +323,8 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     setTranscript(null);
     setIsRecording(false);
     setRecognition(null);
+    setTextareaContent("");
+    setInputMethod(null);
 
     globalSocket?.emit("nextQuestion");
   };
@@ -284,21 +334,22 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     globalSocket?.emit("submitInterview", {user: user});
   };
 
-  
+  const handleClearText = () => {
+    setTextareaContent('')
+    setTranscript(null)
+    setInputMethod(null)
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-0 m-0 overflow-hidden flex">
-      {/* Left side - AI Visualization (30% width) */}
-      <div className="w-3/10 relative flex flex-col bg-gradient-to-b from-indigo-900 to-blue-900 items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-0 m-0 overflow-auto flex flex-col md:flex-row">
+
+      <div className="w-full md:w-3/10 relative flex flex-col bg-gradient-to-b from-indigo-900 to-blue-900 items-center justify-center">
         <div className="px-6 py-8 flex flex-col items-center justify-center h-full w-full">
-          {/* Canvas container */}
           <div className="relative w-full aspect-square max-w-md mb-4">
             <canvas
               ref={canvasRef}
               className="w-full h-full rounded-full"
             ></canvas>
-
-            {/* Pulse effect around the canvas */}
             <div className={`absolute inset-0 rounded-full ${isSpeaking ? 'animate-pulse' : ''} bg-indigo-500 bg-opacity-10 -z-10`}></div>
           </div>
 
@@ -318,8 +369,7 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
         </div>
       </div>
 
-      {/* Right side - Questions & Controls (70% width) */}
-      <div className="w-7/10 h-screen overflow-y-auto">
+      <div className="w-full md:w-7/10 overflow-y-auto md:h-screen">
         <div className="p-6 md:p-10 max-w-4xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold text-indigo-900 mb-8">Interview Session</h1>
 
@@ -332,38 +382,70 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
             <div className="space-y-6">
               {currentQuestion ? (
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500">
-                  {/* Question header with timer */}
                   <div className="bg-gradient-to-r from-indigo-700 to-blue-700 px-6 py-5">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-xl font-semibold text-white">Current Question</h3>
+                    <div className="flex flex-col sm:flex-row justify-between items-center">
+                      <h3 className="text-xl font-semibold text-white mb-2 sm:mb-0">Current Question</h3>
                       <div className="bg-indigo-900 bg-opacity-30 px-4 py-2 rounded-lg">
                         <p className="text-white">Time: <span className="font-mono font-bold">{timer}s</span></p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Question content */}
                   <div className="p-6">
                     <div className="bg-indigo-50 p-5 rounded-xl mb-6">
                       <p className="text-gray-800 text-lg">{currentQuestion.question}</p>
                     </div>
 
-                    {/* Recording controls */}
-                    <div className="flex justify-center mb-6">
+                    <div className="flex flex-wrap justify-center gap-4 mb-6">
                       <button
                         onClick={isRecording ? stopRecording : startRecording}
-                        className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-white shadow-md transition-all duration-300 ${
+                        disabled={inputMethod === "text"}
+                        className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium shadow-md transition-all duration-300 ${
                           isRecording
-                            ? 'bg-red-600 hover:bg-red-700 animate-pulse'
-                            : 'bg-indigo-600 hover:bg-indigo-700'
+                            ? 'bg-red-600 hover:bg-red-700 animate-pulse text-white'
+                            : inputMethod === "text"
+                              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
                         }`}
                       >
-                        <span className={`h-3 w-3 rounded-full ${isRecording ? 'bg-red-300' : 'bg-indigo-300'}`}></span>
+                        <span className={`h-3 w-3 rounded-full ${isRecording ? 'bg-red-300' : inputMethod === "text" ? 'bg-gray-400' : 'bg-indigo-300'}`}></span>
                         {isRecording ? "Stop Recording" : "Start Recording"}
                       </button>
-                    </div>
 
-                    {/* Answer transcript */}
+
+
+                      {!isRecording && inputMethod === "recording" && (
+                        <button
+                          onClick={() => {
+                            setInputMethod(null);
+                            setTranscript(null);
+                          }}
+                          className="px-4 py-3 bg-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-300 transition-colors"
+                        >
+                          Clear Recording
+                        </button>
+                      )}
+                    </div>
+                      <div className="w-full text-center mb-4">
+                      <p className="bg-green-400/20">or</p>
+                      </div>
+                    {!isRecording && (
+                      <div className="mb-6">
+
+                        <textarea
+                          placeholder="Type your answer here..."
+                          value={textareaContent}
+                          onChange={handleTextareaChange}
+                          disabled={inputMethod === "recording"}
+                          className={`w-full p-4 border rounded-xl text-gray-700 resize-none min-h-32 transition-all ${
+                            inputMethod === "recording"
+                              ? 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                              : 'bg-white border-indigo-200 focus:border-indigo-400 focus:ring focus:ring-indigo-100'
+                          }`}
+                        ></textarea>
+                      </div>
+                    )}
+
                     {transcript !== null && (
                       <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
                         <h4 className="text-sm text-gray-500 uppercase tracking-wider mb-2">Your Answer:</h4>
@@ -371,6 +453,12 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
 
                         {!isRecording && (
                           <div className="flex flex-wrap gap-3 justify-end">
+                            <button
+                              onClick={handleClearText}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                            >
+                              Clear Text
+                            </button>
                             <button
                               onClick={handleSkipQuestion}
                               className="px-4 py-2 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
@@ -415,7 +503,7 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
                   ) : (
                     <>
                       <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                      <p className="text-gray-600">Loading next question...</p>
+                      <p className="text-gray-600">Loading Question...</p>
                     </>
                   )}
                 </div>

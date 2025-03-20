@@ -5,7 +5,7 @@ import axios from 'axios';
 import { API_URL } from '../services/api';
 // import Header from './Header';
 import { Loading } from './Loading';
-import { FaArrowDown } from 'react-icons/fa';
+// import { FaArrowDown } from 'react-icons/fa';
 
 interface GoogleAuthConfig {
   client_id: string;
@@ -37,8 +37,8 @@ interface GoogleAuthResponse {
 }
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // const [email, setEmail] = useState('');
+  // const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -80,29 +80,31 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email,
-        password,
-      });
-      login(response.data.token, response.data.user);
-      navigate('/dashboard');
-    } catch (err) {
-      console.log(err);
-      setError('Invalid email or password');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+  //   setError('');
+  //   try {
+  //     const response = await axios.post(`${API_URL}/auth/login`, {
+  //       email,
+  //       password,
+  //     });
+  //     login(response.data.token, response.data.user);
+  //     navigate('/dashboard');
+  //   } catch (err) {
+  //     console.log(err);
+  //     setError('Invalid email or password');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <>
     <nav className="fixed w-full flex justify-between items-center px-6 py-4 bg-gray-100/80 backdrop-blur-sm z-10">
-        <div className="text-xl font-bold tracking-tight text-black">IntervAI</div>
+        <div className="text-xl font-bold tracking-tight text-black">
+          <Link to={'/'}>IntervAI</Link>
+        </div>
 
       </nav>
       {/* <Header /> */}
@@ -113,13 +115,13 @@ export const Login: React.FC = () => {
               {/* <img src='p.png' alt="Logo" className='w-10'/> */}
               {/* <h1 className='text-4xl font-bold'>Chat0sm</h1> */}
             </div>
-            <h2 className="mt-6 text-center md:text-7xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-center text-4xl md:text-7xl font-extrabold text-gray-900">
               Before you Start In !!!!
             </h2>
 
-           <div className='w-full flex justify-center'>
+           {/* <div className='w-screen flex justify-center'>
            <h2 className='text-center w-full'><FaArrowDown /></h2>
-           </div>
+           </div> */}
           </div>
           {/* <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
@@ -191,6 +193,7 @@ export const Login: React.FC = () => {
               </Link>
             </div>
           </form> */}
+
           {isLoading ? (
                 <div className="w-full flex justify-center py-2">
                   <Loading size="medium" color="indigo" message="Processing..." />
@@ -198,9 +201,15 @@ export const Login: React.FC = () => {
               ) : (
                 <div className='flex justify-center'>
 
-                  <div id="googleSignIn" ></div>
+                  <div id="googleSignIn" className='border border-black'></div>
                 </div>
               )}
+
+{error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
         </div>
 
       </div>

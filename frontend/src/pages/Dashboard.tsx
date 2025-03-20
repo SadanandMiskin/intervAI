@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../services/api';
 
-// Define types
+
 interface Answer {
   question: string;
   userAnswer: string;
@@ -35,7 +35,6 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -68,7 +67,7 @@ export const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -100,7 +99,7 @@ export const Dashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Loading and Error States */}
+
         {loading && (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -126,11 +125,8 @@ export const Dashboard = () => {
          </div>
        </div>
         )}
-
-        {/* Dashboard Content */}
         {!loading && !error && (
           <>
-            {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-sm font-medium text-gray-500">Total Sessions</h2>
@@ -175,13 +171,13 @@ export const Dashboard = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
                   {data.sessions.map((session) => {
-                    // Calculate average rating if answers exist
+
                     const answers = session.interviewId.answers || [];
                     const avgRating = answers.length
                       ? (answers.reduce((sum, ans) => sum + ans.rating, 0) / answers.length).toFixed(1)
                       : 'N/A';
 
-                    // Format dates
+                    
                     const createdDate = session.createdAt
                       ? new Date(session.createdAt).toLocaleDateString()
                       : 'N/A';

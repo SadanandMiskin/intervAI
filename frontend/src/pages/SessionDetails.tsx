@@ -1,6 +1,14 @@
-import React from "react";
+// import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+
+
+type Answer ={
+  rating: number
+  improvedAnswer?: string,
+  userAnswer?: string
+  question?: string
+}
 
 export const SessionDetails = () => {
   const { state } = useLocation();
@@ -18,18 +26,18 @@ export const SessionDetails = () => {
     </div>
   );
 
-  const chartData = session.interviewId.answers.map((ans, idx) => ({
+  const chartData = session.interviewId.answers.map((ans: Answer, idx: number) => ({
     name: `Q${idx + 1}`,
     rating: ans.rating,
   }));
 
   const averageRating = (
-    chartData.reduce((acc, item) => acc + item.rating, 0) / chartData.length
+    chartData.reduce((acc: number, item: Answer) => acc + item.rating, 0) / chartData.length
   ).toFixed(1);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Session Details</h1>
@@ -43,15 +51,14 @@ export const SessionDetails = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Job Description */}
+
         <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 border-b pb-2">Job Description</h2>
           <p className="mt-4 text-gray-700 leading-relaxed">{session.interviewId.jd}</p>
         </div>
 
-        {/* Two-column layout for desktop, stack for mobile */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left column - Chart */}
+
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Performance Analysis</h2>
             <div className="flex items-center justify-center gap-6 mb-6">
@@ -77,7 +84,7 @@ export const SessionDetails = () => {
                   <Line
                     type="monotone"
                     dataKey="rating"
-                    stroke="#000000"
+                    stroke="#3b82f6"
                     strokeWidth={3}
                     dot={{ r: 6, strokeWidth: 2, fill: "#fff", stroke: "#3b82f6" }}
                     activeDot={{ r: 8, fill: "#3b82f6" }}
@@ -87,7 +94,6 @@ export const SessionDetails = () => {
             </div>
           </div>
 
-          {/* Right column - Analysis */}
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Interview Analysis</h2>
@@ -104,7 +110,7 @@ export const SessionDetails = () => {
               <div className="mt-4">
                 <div className="flex items-center mb-2">
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${averageRating * 10}%` }}></div>
+                    <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${Number(averageRating) * 10}%` }}></div>
                   </div>
                   <span className="text-sm font-medium text-gray-700 ml-2">{averageRating}/10</span>
                 </div>
@@ -118,7 +124,7 @@ export const SessionDetails = () => {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Interview Questions</h2>
               <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
-                {session.interviewId.answers.map((answer, index) => (
+                {session.interviewId.answers.map((answer: Answer, index: number) => (
                   <div key={index} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                     <p className="font-medium text-gray-800">Q{index + 1}: {answer.question}</p>
                     <div className="mt-2 pl-4 border-l-2 border-gray-200">

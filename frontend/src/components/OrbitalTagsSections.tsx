@@ -4,15 +4,13 @@ const OllamaSolarSystem: React.FC = () => {
   return (
     <section className="relative py-36 px-4 sm:px-6 bg-gray-100 overflow-hidden  ">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center mt-5 space-y-12 lg:space-y-0 lg:space-x-12">
-        {/* Solar System Layout - Left Side */}
+      
         <div className="relative w-full lg:w-1/2 flex justify-center items-center">
           <div className="relative w-60 sm:w-72 h-60 sm:h-72 flex justify-center items-center">
-            {/* Center Ollama */}
+
             <div className="p-16 sm:p-20 absolute z-10 w-32 h-32 sm:w-40 sm:h-40 bg-blue-100 rounded-full flex justify-center items-center shadow-lg border-4 border-white">
               <div className="text-md sm:text-lg font-bold text-blue-600">IntervAI</div>
             </div>
-
-            {/* Outer Circles */}
             {[
               { text: "AI", color: "bg-blue-500", x: "0%", y: "-120%" },
               { text: "Web", color: "bg-purple-500", x: "-120%", y: "0%" },
@@ -34,7 +32,7 @@ const OllamaSolarSystem: React.FC = () => {
           </div>
         </div>
 
-        {/* Text Content - Right Side */}
+
         <div className="w-full lg:w-1/2 text-center lg:text-left px-4">
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4">
             Specially curated questions
