@@ -106,7 +106,7 @@ export const Interview = ({ globalSocket }: { globalSocket: Socket | null }) => 
     });
 
     globalSocket.on("interviewFeedback", (feedback) => {
-      navigate("/results", { state: { feedback } });
+      navigate("/dashboard", { state: { feedback } });
     });
 
     return () => {

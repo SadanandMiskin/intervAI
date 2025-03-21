@@ -4,6 +4,7 @@ import HowItWorks from "../components/HowItWorks";
 import { Link } from "react-router-dom";
 import { FaGoogle } from "react-icons/fa";
 import TTSSupportBanner from "../components/TTSSupportBanner";
+// import { DotPattern } from "../components/magicui/dot-pattern";
 
 const Homepage: React.FC = () => {
   const [gradientPosition, setGradientPosition] = useState(100);
@@ -32,7 +33,7 @@ const Homepage: React.FC = () => {
 
 <TTSSupportBanner />
 
-
+{/* <DotPattern /> */}
     <div className="min-h-screen bg-gray-300 text-white font-sans">
 
       <nav className="fixed w-full flex justify-between items-center px-6 py-4 bg-gray-100/80 backdrop-blur-sm z-10">
@@ -54,8 +55,8 @@ const Homepage: React.FC = () => {
       <section
         className="flex justify-center items-center h-screen p-6 md:px-20 transition-all duration-1000"
         style={{
-          backgroundColor: "hsla(0,0%,100%,1)",
-          backgroundImage: `radial-gradient(at ${gradientPosition}% 50%, hsla(229,100%,50%,1) 0px, transparent 50%), radial-gradient(at ${gradientPosition - 5}% 48%, hsla(268,20%,56%,1) 0px, transparent 50%)`,
+          backgroundColor: "hsla(0,0%,90%,1)",
+          backgroundImage: `radial-gradient(at ${gradientPosition}% 50%, hsla(219,100%,50%,1) 0px, transparent 50%), radial-gradient(at ${gradientPosition - 5}% 48%, hsla(68,90%,56%,1) 0px, transparent 60%)`,
         }}
       >
         <div className="w-full text-center  ">
@@ -72,7 +73,7 @@ const Homepage: React.FC = () => {
            </p>
           <div className="mt-8 flex justify-center gap-4 ">
             <Link to="/dashboard">
-            <button className="px-6 md:px-18 py-3 md:py-4  bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl">
+            <button className="px-6 md:px-18 py-3 md:py-4  bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl">
               {token ? 'Dashboard' : 'Get Started'}
             </button>
             </Link>

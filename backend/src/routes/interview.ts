@@ -4,7 +4,7 @@ import { createInterview } from "../controllers/interview";
 
 const router = express.Router();
 
-router.post("/create", createInterview);
+// router.post("/create", createInterview);
 router.post("/evaluate", rateAndImproveAnswer);
 router.get("/feedback/:userId", getInterviewFeedback);
 

@@ -1,12 +1,14 @@
 import React from "react";
+import { AnimatedBeam } from "./magicui/AnimatedBeam";
+import Animated from "./Animated";
 
 const OllamaSolarSystem: React.FC = () => {
   return (
     <section className="relative py-36 px-4 sm:px-6 bg-gray-100 overflow-hidden  ">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center mt-5 space-y-12 lg:space-y-0 lg:space-x-12">
-      
+
         <div className="relative w-full lg:w-1/2 flex justify-center items-center">
-          <div className="relative w-60 sm:w-72 h-60 sm:h-72 flex justify-center items-center">
+          {/* <div className="relative w-60 sm:w-72 h-60 sm:h-72 flex justify-center items-center">
 
             <div className="p-16 sm:p-20 absolute z-10 w-32 h-32 sm:w-40 sm:h-40 bg-blue-100 rounded-full flex justify-center items-center shadow-lg border-4 border-white">
               <div className="text-md sm:text-lg font-bold text-blue-600">IntervAI</div>
@@ -29,7 +31,8 @@ const OllamaSolarSystem: React.FC = () => {
                 {text}
               </div>
             ))}
-          </div>
+          </div> */}
+          <Animated />
         </div>
 
 
@@ -41,7 +44,7 @@ const OllamaSolarSystem: React.FC = () => {
           <p className="text-lg sm:text-xl md:text-xl text-gray-700 leading-relaxed">
             Topics covered by IntervAI - 'ANYTHING'
           </p>
-          <button className="mt-6 px-6 py-3 sm:px-8 sm:py-4 bg-blue-600 hover:bg-blue-700 text-white text-md sm:text-lg font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl">
+          <button className="mt-6 px-6 py-3 sm:px-8 sm:py-4 bg-blue-600 hover:bg-blue-700 text-white text-md sm:text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl">
             Lets Go
           </button>
         </div>
