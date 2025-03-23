@@ -30,7 +30,7 @@ export const googleSignIn = async (req: Request, res: Response) => {
       // const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
       user = await User.create({
-        username: name?.replace(/\s+/g, '').toLowerCase() || email.split('@')[0], 
+        username: name?.replace(/\s+/g, '').toLowerCase() || email.split('@')[0],
         email,
         // password: hashedPassword,
         googleId,
@@ -42,7 +42,7 @@ export const googleSignIn = async (req: Request, res: Response) => {
     });
 
 
-    console.log(user)
+    // console.log(user)
 
     res.json({
       token: jwtToken,

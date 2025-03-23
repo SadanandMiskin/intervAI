@@ -1,5 +1,5 @@
 import React from "react";
-import { AnimatedBeam } from "./magicui/AnimatedBeam";
+// import { AnimatedBeam } from "./magicui/AnimatedBeam";
 import Animated from "./Animated";
 
 const OllamaSolarSystem: React.FC = () => {

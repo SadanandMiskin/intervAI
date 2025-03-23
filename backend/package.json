@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "yarn tsc && node --watch --env-file=.env dist/index.js"
+    "dev": "yarn tsc && node --watch --env-file=.env dist/index.js",
+    "d": "tsc && node dist/index.js"
   },
   "devDependencies": {
     "typescript": "^5.8.2"

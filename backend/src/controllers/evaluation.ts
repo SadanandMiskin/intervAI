@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 import Redis from "ioredis";
 
-const redis = new Redis();
+const redis = new Redis({
+  host: 'redis',
+  port: 6379
+});
 
 const llm = new ChatFireworks({
   model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
@@ -18,14 +21,14 @@ export async function evaluateAnswer(question: string, answer: string) {
   const aiMsg = await llm.invoke( [
     [
       "system",
-      `You are an expert AI interviewer. Evaluate the answer for correctness, depth, and clarity.
+      `You are an expert AI interviewer. Evaluate the answer for correctness, depth, and clarity, Answer should not be more than 5 lines.
        Give a rating from 1 to 10 and suggest improvements if necessary.
-       Return JSON format: { rating: number, improvedAnswer: string } only, noo need of extra writing. improvedAnswer should not too long.`,
+       Return JSON format: { rating: number, improvedAnswer: string } only, noo need of extra writing.`,
     ],
     ["human", `Question: ${question}\nAnswer: ${answer}`],
   ]);
   const responseText = String(aiMsg.content);
-  console.log(aiMsg.content)
+  // console.log(aiMsg.content)
   try {
     return JSON.parse(responseText);
   } catch (error) {

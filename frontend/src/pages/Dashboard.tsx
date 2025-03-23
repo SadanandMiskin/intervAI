@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../services/api';
@@ -177,7 +177,7 @@ export const Dashboard = () => {
                       ? (answers.reduce((sum, ans) => sum + ans.rating, 0) / answers.length).toFixed(1)
                       : 'N/A';
 
-                    
+
                     const createdDate = session.createdAt
                       ? new Date(session.createdAt).toLocaleDateString()
                       : 'N/A';
