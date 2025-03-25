@@ -34,7 +34,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      FIREWORKS_API_KEY: fw_3ZnQ
+      FIREWORKS_API_KEY: add_your_own_api_key
     env_file:
       - ./backend/.env
     # depends_on:
