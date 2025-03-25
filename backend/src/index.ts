@@ -201,4 +201,4 @@ app.get('/api/sessions' ,authMiddleware,  async(req, res)=> {
 
 const port = process.env.PORT || 3000;
 
-server.listen(port, '0.0.0.0', () => console.log(`Server running at http://localhost:${port}`));
+server.listen(port,  () => console.log(`Server running at http://localhost:${port}`));
