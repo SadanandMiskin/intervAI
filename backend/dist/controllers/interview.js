@@ -12,12 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createInterview = createInterview;
 exports.getInterviewQuestions = getInterviewQuestions;
 const fireworks_1 = require("@langchain/community/chat_models/fireworks");
+const fireworksKey = process.env.FIREWORKS_API_KEY;
 const llm = new fireworks_1.ChatFireworks({
     model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
     temperature: 0,
     maxTokens: undefined,
     timeout: undefined,
     maxRetries: 2,
+    apiKey: fireworksKey
 });
 class Interview {
     constructor(jd) {

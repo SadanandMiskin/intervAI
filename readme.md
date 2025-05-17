@@ -15,8 +15,18 @@
 
 ### Setup
 - Install Docker
-- Get your `FIREWORKS_API_KEY` from the Fireworks ai and add in `docker-compose.yml` under `backend` service environemt
-- Start the containers:
+- Run `git clone https://github.com/SadanandMiskin/intervAI`
+- `cd intervAI`
+- `cd backend`
+- In `backend` folder create `.env` file using the existing `.env.example` contents
+  ```bash
+  FIREWORKS_API_KEY=  # Get from fireworks AI
+  MONGODB=mongodb://localhost:27017
+  JWT_SECRET=your_jwt_secret  # Change this (optional)
+  GOOGLE_CLIENT_ID= # Get this from google console
+  FRONTEND_URL=http://localhost:5173
+  ```
+- In the root folder of app `intervAI`, Start the containers as:
 ```
   docker-compose up
   ```

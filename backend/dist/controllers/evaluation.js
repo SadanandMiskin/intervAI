@@ -27,6 +27,7 @@ const llm = new fireworks_1.ChatFireworks({
     maxTokens: undefined,
     timeout: undefined,
     maxRetries: 2,
+    apiKey: process.env.FIREWORKS_API_KEY,
 });
 function evaluateAnswer(question, answer) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -34,9 +35,11 @@ function evaluateAnswer(question, answer) {
         const aiMsg = yield llm.invoke([
             [
                 "system",
-                `You are an expert AI interviewer. Evaluate the answer for correctness, depth, and clarity, Answer should not be more than 5 lines.
-       Give a rating from 1 to 10 and suggest improvements if necessary.
-       Return JSON format: { rating: number, improvedAnswer: string } only, noo need of extra writing.`,
+                `You are an expert AI interviewer. Evaluate the candidate's answer for correctness, depth, and clarity.
+Respond only in strict minified JSON format using double quotes for keys and string values.
+Format: { "rating": number, "improvedAnswer": string }
+If the answer is already correct and doesn't need any improvements, set "improvedAnswer" to "NA".
+Do not include any extra explanation, text, or formatting. Only return valid JSON in one line.`
             ],
             ["human", `Question: ${question}\nAnswer: ${answer}`],
         ]);

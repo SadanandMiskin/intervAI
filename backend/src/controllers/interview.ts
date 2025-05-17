@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
 
+const fireworksKey = process.env.FIREWORKS_API_KEY!;
 const llm = new ChatFireworks({
   model: "accounts/fireworks/models/llama-v3p1-70b-instruct",
   temperature: 0,
   maxTokens: undefined,
   timeout: undefined,
   maxRetries: 2,
+  apiKey: fireworksKey
 });
 
 class Interview {
