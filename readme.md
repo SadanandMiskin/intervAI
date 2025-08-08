@@ -39,7 +39,8 @@
 
 ### ScreenShot
 ![Screenshot from 2025-03-22 00-13-24](https://github.com/user-attachments/assets/72a79b74-4b5a-4182-863c-7e4bf8bf7a98)
-![image](https://github.com/user-attachments/assets/fb21cba2-68c3-4765-9506-0ac76facd489)
+<img width="1887" height="919" alt="image" src="https://github.com/user-attachments/assets/9c3df23c-b016-4845-8563-70c39264322a" />
+
 
 ![image](https://github.com/user-attachments/assets/6cfdfef8-1d59-488f-8855-4229f902b232)
 
