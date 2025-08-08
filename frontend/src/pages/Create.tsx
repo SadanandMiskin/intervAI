@@ -1,6 +1,7 @@
 import  { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { useNavigate, Link } from "react-router-dom";
+import { API_URL } from "../services/api";
 
 export const Create = ({ setGlobalSocket }: { setGlobalSocket: (socket: Socket) => void }) => {
   const [jd, setJD] = useState<string>("");
@@ -33,7 +34,7 @@ export const Create = ({ setGlobalSocket }: { setGlobalSocket: (socket: Socket) 
   // Handle navigation after loading completes
   useEffect(() => {
     if (loadingProgress === 100 && isLoading) {
-      const socket: Socket = io("https://api.0sm.bar", {
+      const socket: Socket = io(API_URL, {
         auth: { token: localStorage.getItem("token") },
       });
 

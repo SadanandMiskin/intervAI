@@ -72,7 +72,7 @@ app.post('/api/tts-stream', async (req, res) => {
       },
       {
         headers: {
-          'xi-api-key': 'sk_e8ff8dae11d1198c76a78ed559ebaaf79640aacb45e91c48',
+          'xi-api-key':  process.env.ELEVEN_LABS_API_KEY,
           'Content-Type': 'application/json',
           'Accept': 'application/octet-stream'
         },
