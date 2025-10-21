@@ -35,7 +35,7 @@ const redis = new Redis({
   port: 6379
 });
 
-mongoose.connect("mongodb+srv://sada:sada@cluster0.qaxfxid.mongodb.net/?retryWrites=true&w=majority").then(() => console.log('Connected to Mongo')).catch((e)=> console.log(e))
+mongoose.connect(process.ENV.MONGO).then(() => console.log('Connected to Mongo')).catch((e)=> console.log(e))
 
 interface UserSession {
   socket: Socket;
